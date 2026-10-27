@@ -10,10 +10,8 @@ import fr.efrei.transport.contrat.Notification;
 import fr.efrei.transport.contrat.Statut;
 import fr.efrei.transport.contrat.SystemeTransport;
 
-import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalDouble;
@@ -64,7 +62,7 @@ public class NouveauSystemeAdapter implements SystemeTransport {
         if (e == null) {
             return Optional.empty();
         }
-        int delai = (int) ChronoUnit.DAYS.between(jour(e.getDateCreation()), jour(e.getDateLivraisonPrevue()));
+        int delai = (int) ChronoUnit.DAYS.between(e.getDateCreation(), e.getDateLivraisonPrevue());
         return Optional.of(new EtatExpedition(e.getId(), Statut.valueOf(e.getStatut().name()), e.getPrixHT(), e.getPrixTTC(),
                 delai, e.getVehicule().getImmatriculation(), e.getFraisAnnulation()));
     }
@@ -93,7 +91,7 @@ public class NouveauSystemeAdapter implements SystemeTransport {
 
     @Override
     public Optional<String> facture(String id) {
-        return Optional.ofNullable(Database.expeditions.get(id)).map(Expedition::genererFacture);
+        return Optional.ofNullable(Database.expeditions.get(id)).map(new GenerateurFacture()::generer);
     }
 
     @Override
@@ -106,10 +104,6 @@ public class NouveauSystemeAdapter implements SystemeTransport {
             notifications.add(new Notification(Canal.SMS, sms[0], sms[1]));
         }
         return notifications;
-    }
-
-    private static java.time.LocalDate jour(Date date) {
-        return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
     }
 
     private static List<Colis> versColis(List<ColisDto> colis) {

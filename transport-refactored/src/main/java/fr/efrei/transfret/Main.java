@@ -7,6 +7,7 @@ public class Main {
 
     public static void main(String[] args) {
         Flotte.initialiser();
+        GenerateurFacture factures = new GenerateurFacture();
         ServiceClient serviceClient = new ServiceClient();
         ServiceExpedition serviceExpedition = new ServiceExpedition();
 
@@ -45,7 +46,7 @@ public class Main {
         serviceExpedition.annulerExpedition(exp2.getId());
 
         System.out.println("\n----- Factures -----");
-        System.out.println(exp1.genererFacture());
-        System.out.println(exp2.genererFacture());
+        System.out.println(factures.generer(exp1));
+        System.out.println(factures.generer(exp2));
     }
 }

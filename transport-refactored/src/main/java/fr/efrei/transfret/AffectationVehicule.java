@@ -1,19 +1,12 @@
 package fr.efrei.transfret;
 
-import java.util.List;
-
 public class AffectationVehicule {
 
     // retourne le premier véhicule disponible et compatible, null si aucun
-    public Vehicule trouverVehicule(List<Colis> colis, ModeTransport mode) {
-        double poids = 0;
-        boolean dangereux = false;
-        boolean refrigere = false;
-        for (Colis c : colis) {
-            poids = poids + c.getPoids();
-            if (c.getType() == TypeMarchandise.DANGEREUX) dangereux = true;
-            if (c.getType() == TypeMarchandise.REFRIGERE) refrigere = true;
-        }
+    public Vehicule trouverVehicule(Chargement chargement, ModeTransport mode) {
+        double poids = chargement.poids();
+        boolean dangereux = chargement.contient(TypeMarchandise.DANGEREUX);
+        boolean refrigere = chargement.contient(TypeMarchandise.REFRIGERE);
         for (Vehicule v : Flotte.vehicules) {
             if (!v.estDisponible()) continue;
             if (v.getCapaciteMax() - v.getChargeActuelle() < poids) continue;
