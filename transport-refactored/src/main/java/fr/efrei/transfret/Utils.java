@@ -7,10 +7,6 @@ public class Utils {
 
     public static SimpleDateFormat FORMAT_DATE = new SimpleDateFormat("dd/MM/yyyy");
 
-    public static double arrondir(double valeur) {
-        return Math.round(valeur * 100.0) / 100.0;
-    }
-
     public static String formaterDate(Date d) {
         if (d == null) {
             return "";
