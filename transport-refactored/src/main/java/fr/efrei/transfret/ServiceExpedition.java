@@ -3,8 +3,8 @@ package fr.efrei.transfret;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalDouble;
 import java.util.OptionalInt;
-import java.util.Random;
 
 public class ServiceExpedition {
 
@@ -13,17 +13,33 @@ public class ServiceExpedition {
     private static final int ALTITUDE_CROISIERE_PIEDS = 35000;
     private static final double TEMPERATURE_REFRIGERATION = 4;
 
-    public static int compteur = 0;
+    private final ExpeditionRepository expeditions;
+    private final ClientRepository clients;
+    private final ValidateurExpedition validateur;
+    private final TableDistances distances;
+    private final AffectationVehicule affectation;
+    private final CalculateurPrix calculateur;
+    private final EstimateurDelai estimateurDelai;
+    private final Notificateur notificateur;
+    private final GenerateurIdentifiant identifiants;
 
-    private Database db = Database.getInstance();
-    private CalculateurPrix calculateur = new CalculateurPrix();
-    private AffectationVehicule affectation = new AffectationVehicule();
-    private ValidateurExpedition validateur = new ValidateurExpedition();
-    private EstimateurDelai estimateurDelai = new EstimateurDelai();
-    private Notificateur notificateur = new Notificateur();
-    private TableDistances distances = TableDistances.reseauTransFret();
+    public ServiceExpedition(ExpeditionRepository expeditions, ClientRepository clients, ValidateurExpedition validateur,
+                             TableDistances distances, AffectationVehicule affectation, CalculateurPrix calculateur,
+                             EstimateurDelai estimateurDelai, Notificateur notificateur, GenerateurIdentifiant identifiants) {
+        this.expeditions = expeditions;
+        this.clients = clients;
+        this.validateur = validateur;
+        this.distances = distances;
+        this.affectation = affectation;
+        this.calculateur = calculateur;
+        this.estimateurDelai = estimateurDelai;
+        this.notificateur = notificateur;
+        this.identifiants = identifiants;
+    }
 
-    public Expedition creerExpedition(Client client, List<Colis> colis, String villeDepart, String villeArrivee, ModeTransport mode, boolean urgent, boolean assurance) {
+    public Optional<Expedition> creerExpedition(String emailClient, List<Colis> colis, String villeDepart, String villeArrivee,
+                                                ModeTransport mode, boolean urgent, boolean assurance) {
+        Client client = clients.trouver(emailClient).orElse(null);
         Chargement chargement = new Chargement(colis);
         Optional<String> refus = validateur.verifier(client, chargement, mode, urgent);
         if (refus.isPresent()) {
@@ -33,37 +49,42 @@ public class ServiceExpedition {
         if (distance.isEmpty()) {
             return refuser("trajet inconnu " + villeDepart + " -> " + villeArrivee);
         }
-        Vehicule v = affectation.trouverVehicule(chargement, mode);
-        if (v == null) {
+        Optional<Vehicule> vehicule = affectation.trouverVehicule(chargement, mode);
+        if (vehicule.isEmpty()) {
             return refuser("aucun véhicule disponible pour cette expédition");
         }
+        Vehicule v = vehicule.get();
         for (Colis c : chargement.colis()) {
             v.charger(c);
         }
 
         int km = distance.getAsInt();
         LocalDate creation = LocalDate.now();
-        compteur++;
-        Expedition e = new Expedition("EXP-" + compteur + "-" + (1000 + new Random().nextInt(9000)), client, chargement,
-                villeDepart, villeArrivee, km, mode, urgent, v,
-                calculateur.calculerPrixHT(chargement, km, mode, urgent, assurance, client.getType()),
+        Expedition e = new Expedition(identifiants.suivant(), client, chargement, villeDepart, villeArrivee, km, mode,
+                urgent, v, calculateur.calculerPrixHT(chargement, km, mode, urgent, assurance, client.getType()),
                 creation, creation.plusDays(estimateurDelai.jours(km, mode, urgent)));
-        db.sauvegarderExpedition(e);
+        expeditions.sauvegarder(e);
         notificateur.confirmerCreation(e);
-        return e;
+        return Optional.of(e);
     }
 
-    // retourne le prix TTC, -1 si le trajet est inconnu
-    public double calculerDevis(List<Colis> colis, String villeDepart, String villeArrivee, ModeTransport mode, boolean urgent, boolean assurance, TypeClient typeClient) {
+    /** @return le prix TTC, ou vide si le trajet est inconnu */
+    public OptionalDouble calculerDevis(List<Colis> colis, String villeDepart, String villeArrivee, ModeTransport mode,
+                                        boolean urgent, boolean assurance, TypeClient typeClient) {
         OptionalInt distance = distances.distance(villeDepart, villeArrivee);
         if (distance.isEmpty()) {
-            return -1;
+            return OptionalDouble.empty();
         }
-        return Montants.ttc(calculateur.calculerPrixHT(new Chargement(colis), distance.getAsInt(), mode, urgent, assurance, typeClient));
+        return OptionalDouble.of(Montants.ttc(
+                calculateur.calculerPrixHT(new Chargement(colis), distance.getAsInt(), mode, urgent, assurance, typeClient)));
+    }
+
+    public Optional<Expedition> trouver(String id) {
+        return expeditions.trouver(id);
     }
 
     public boolean demarrerExpedition(String id) {
-        Expedition e = db.trouverExpedition(id);
+        Expedition e = expeditions.trouver(id).orElse(null);
         if (e == null || !e.demarrer()) {
             System.out.println("ERREUR : impossible de démarrer l'expédition " + id);
             return false;
@@ -85,31 +106,31 @@ public class ServiceExpedition {
         if (e.getChargement().contient(TypeMarchandise.REFRIGERE)) {
             v.activerRefrigeration(TEMPERATURE_REFRIGERATION);
         }
-        db.mettreAJourStatut(e);
+        expeditions.sauvegarder(e);
         notificateur.signalerDepart(e);
         return true;
     }
 
     public boolean livrerExpedition(String id) {
-        Expedition e = db.trouverExpedition(id);
+        Expedition e = expeditions.trouver(id).orElse(null);
         if (e == null || !e.livrer()) {
             System.out.println("ERREUR : impossible de livrer l'expédition " + id);
             return false;
         }
         libererVehicule(e);
-        db.mettreAJourStatut(e);
+        expeditions.sauvegarder(e);
         notificateur.signalerLivraison(e);
         return true;
     }
 
     public boolean annulerExpedition(String id) {
-        Expedition e = db.trouverExpedition(id);
+        Expedition e = expeditions.trouver(id).orElse(null);
         if (e == null || !e.annuler()) {
             System.out.println("ERREUR : impossible d'annuler l'expédition " + id);
             return false;
         }
         libererVehicule(e);
-        db.mettreAJourStatut(e);
+        expeditions.sauvegarder(e);
         notificateur.signalerAnnulation(e);
         return true;
     }
@@ -121,8 +142,8 @@ public class ServiceExpedition {
         e.getVehicule().setDisponible(true);
     }
 
-    private static Expedition refuser(String motif) {
+    private static Optional<Expedition> refuser(String motif) {
         System.out.println("ERREUR : " + motif);
-        return null;
+        return Optional.empty();
     }
 }

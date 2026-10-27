@@ -9,8 +9,16 @@ public class Notificateur {
 
     private static final DateTimeFormatter FORMAT_DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
+    private final CanalEmail email;
+    private final CanalSms sms;
+
+    public Notificateur(CanalEmail email, CanalSms sms) {
+        this.email = email;
+        this.sms = sms;
+    }
+
     public void souhaiterBienvenue(Client client) {
-        EmailService.envoyer(client.getEmail(), "Bienvenue chez TransFret",
+        email.envoyer(client.getEmail(), "Bienvenue chez TransFret",
                 "Bonjour " + client.getNom() + ", votre compte " + client.getType().name().toLowerCase() + " a été créé.");
     }
 
@@ -38,10 +46,10 @@ public class Notificateur {
                 "TransFret : expédition " + e.getId() + " annulée");
     }
 
-    private void notifier(Client client, String sujet, String corps, String sms) {
-        EmailService.envoyer(client.getEmail(), sujet, corps);
+    private void notifier(Client client, String sujet, String corps, String texteSms) {
+        email.envoyer(client.getEmail(), sujet, corps);
         if (client.getType() == TypeClient.PREMIUM) {
-            new SmsService().envoyerSms(client.getTelephone(), sms);
+            sms.envoyer(client.getTelephone(), texteSms);
         }
     }
 }
