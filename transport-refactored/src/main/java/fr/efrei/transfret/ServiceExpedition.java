@@ -61,7 +61,7 @@ public class ServiceExpedition {
         int km = distance.getAsInt();
         LocalDate creation = LocalDate.now();
         Expedition e = new Expedition(identifiants.suivant(), client, chargement, villeDepart, villeArrivee, km, mode,
-                urgent, v, calculateur.calculerPrixHT(chargement, km, mode, urgent, assurance, client.getType()),
+                urgent, v, calculateur.calculerPrixHT(new DemandeTarif(chargement, km, mode, urgent, assurance, client.getType())),
                 creation, creation.plusDays(estimateurDelai.jours(km, mode, urgent)));
         expeditions.sauvegarder(e);
         notificateur.confirmerCreation(e);
@@ -75,8 +75,8 @@ public class ServiceExpedition {
         if (distance.isEmpty()) {
             return OptionalDouble.empty();
         }
-        return OptionalDouble.of(Montants.ttc(
-                calculateur.calculerPrixHT(new Chargement(colis), distance.getAsInt(), mode, urgent, assurance, typeClient)));
+        return OptionalDouble.of(Montants.ttc(calculateur.calculerPrixHT(
+                new DemandeTarif(new Chargement(colis), distance.getAsInt(), mode, urgent, assurance, typeClient))));
     }
 
     public Optional<Expedition> trouver(String id) {

@@ -37,14 +37,23 @@ public class TransFret {
                 .ajouter("Marseille", "Alger", 760)
                 .ajouter("Paris", "New York", 5840);
 
-        CalculateurPrix calculateur = new CalculateurPrix(
-                Map.of(ModeTransport.ROUTE, new TarifRoute(),
-                        ModeTransport.RAIL, new TarifRail(),
-                        ModeTransport.MER, new TarifMer(),
-                        ModeTransport.AIR, new TarifAir()),
-                Map.of(TypeClient.PARTICULIER, new AucuneRemise(),
-                        TypeClient.ENTREPRISE, new RemiseEntreprise(),
-                        TypeClient.PREMIUM, new RemisePremium()));
+        // L'ordre compte : la remise entreprise dépend du prix après suppléments et urgence,
+        // et l'assurance s'ajoute après la remise.
+        CalculPrix prix = new TarifSelonMode(Map.of(
+                ModeTransport.ROUTE, new TarifRoute(),
+                ModeTransport.RAIL, new TarifRail(),
+                ModeTransport.MER, new TarifMer(),
+                ModeTransport.AIR, new TarifAir()));
+        prix = new SupplementFragile(prix);
+        prix = new SupplementDangereux(prix);
+        prix = new SupplementRefrigere(prix);
+        prix = new SupplementUrgence(prix);
+        prix = new RemiseClient(prix, Map.of(
+                TypeClient.PARTICULIER, new AucuneRemise(),
+                TypeClient.ENTREPRISE, new RemiseEntreprise(),
+                TypeClient.PREMIUM, new RemisePremium()));
+        prix = new Assurance(prix);
+        CalculateurPrix calculateur = new CalculateurPrix(prix);
         EstimateurDelai estimateurDelai = new EstimateurDelai(
                 Map.of(ModeTransport.ROUTE, new DelaiRoute(),
                         ModeTransport.RAIL, new DelaiRail(),
