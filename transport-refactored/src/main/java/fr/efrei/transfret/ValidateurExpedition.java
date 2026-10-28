@@ -20,14 +20,13 @@ public class ValidateurExpedition {
                 return Optional.of("poids invalide pour " + c.getDescription());
             }
         }
-        if (chargement.contient(TypeMarchandise.DANGEREUX) && mode == ModeTransport.AIR) {
-            return Optional.of("les matières dangereuses sont interdites en transport aérien");
+        for (TypeMarchandise interdite : mode.marchandisesInterdites()) {
+            if (chargement.contient(interdite)) {
+                return Optional.of("marchandise « " + interdite.getLibelle() + " » interdite en " + mode);
+            }
         }
-        if (chargement.contient(TypeMarchandise.REFRIGERE) && !(mode == ModeTransport.ROUTE || mode == ModeTransport.MER)) {
-            return Optional.of("le transport réfrigéré n'est possible que par route ou par mer");
-        }
-        if (urgent && mode == ModeTransport.MER) {
-            return Optional.of("pas d'option urgente pour le transport maritime");
+        if (urgent && !mode.urgenceAutorisee()) {
+            return Optional.of("pas d'option urgente en " + mode);
         }
         return Optional.empty();
     }

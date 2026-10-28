@@ -1,6 +1,7 @@
 package fr.efrei.transfret;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Point d'assemblage : le seul endroit qui construit le graphe d'objets de l'application.
@@ -36,9 +37,23 @@ public class TransFret {
                 .ajouter("Marseille", "Alger", 760)
                 .ajouter("Paris", "New York", 5840);
 
+        CalculateurPrix calculateur = new CalculateurPrix(
+                Map.of(ModeTransport.ROUTE, new TarifRoute(),
+                        ModeTransport.RAIL, new TarifRail(),
+                        ModeTransport.MER, new TarifMer(),
+                        ModeTransport.AIR, new TarifAir()),
+                Map.of(TypeClient.PARTICULIER, new AucuneRemise(),
+                        TypeClient.ENTREPRISE, new RemiseEntreprise(),
+                        TypeClient.PREMIUM, new RemisePremium()));
+        EstimateurDelai estimateurDelai = new EstimateurDelai(
+                Map.of(ModeTransport.ROUTE, new DelaiRoute(),
+                        ModeTransport.RAIL, new DelaiRail(),
+                        ModeTransport.MER, new DelaiMer(),
+                        ModeTransport.AIR, new DelaiAir()));
+
         serviceClient = new ServiceClient(new ValidateurClient(), clients, notificateur);
         serviceExpedition = new ServiceExpedition(new ExpeditionRepositoryEnMemoire(), clients, new ValidateurExpedition(),
-                distances, new AffectationVehicule(flotte), new CalculateurPrix(), new EstimateurDelai(), notificateur,
+                distances, new AffectationVehicule(flotte), calculateur, estimateurDelai, notificateur,
                 new GenerateurIdentifiant());
     }
 
