@@ -3,15 +3,14 @@ package fr.efrei.transfret;
 import java.util.Optional;
 
 /**
- * Règles d'acceptation d'une demande d'expédition.
+ * Règles d'acceptation d'une commande.
  */
 public class ValidateurExpedition {
 
-    /** @return le motif du refus, ou vide si la demande est acceptable */
-    public Optional<String> verifier(Client client, Chargement chargement, ModeTransport mode, boolean urgent) {
-        if (client == null) {
-            return Optional.of("client obligatoire");
-        }
+    /** @return le motif du refus, ou vide si la commande est acceptable */
+    public Optional<String> verifier(Commande commande) {
+        Chargement chargement = commande.chargement();
+        ModeTransport mode = commande.mode();
         if (chargement.estVide()) {
             return Optional.of("au moins un colis est nécessaire");
         }
@@ -25,7 +24,7 @@ public class ValidateurExpedition {
                 return Optional.of("marchandise « " + interdite.getLibelle() + " » interdite en " + mode);
             }
         }
-        if (urgent && !mode.urgenceAutorisee()) {
+        if (commande.urgent() && !mode.urgenceAutorisee()) {
             return Optional.of("pas d'option urgente en " + mode);
         }
         return Optional.empty();

@@ -31,15 +31,14 @@ public class NouveauSystemeAdapter implements SystemeTransport {
     @Override
     public Optional<String> creerClient(DemandeClient d) {
         return transfret.serviceClient()
-                .creerClient(d.nom(), d.email(), d.telephone(), d.adresse(), TypeClient.valueOf(d.type().name()), d.siret())
+                .inscrire(new Client(d.nom(), d.email(), d.telephone(), d.adresse(), TypeClient.valueOf(d.type().name()), d.siret()))
                 .map(Client::getEmail);
     }
 
     @Override
     public Optional<String> creerExpedition(DemandeExpedition d) {
         return transfret.serviceExpedition()
-                .creerExpedition(d.refClient(), versColis(d.colis()), d.villeDepart(), d.villeArrivee(),
-                        ModeTransport.valueOf(d.mode().name()), d.urgent(), d.assurance())
+                .creerExpedition(d.refClient(), versCommande(d))
                 .map(Expedition::getId);
     }
 
@@ -53,8 +52,7 @@ public class NouveauSystemeAdapter implements SystemeTransport {
 
     @Override
     public OptionalDouble devisTTC(DemandeDevis d) {
-        return transfret.serviceExpedition().calculerDevis(versColis(d.colis()), d.villeDepart(), d.villeArrivee(),
-                ModeTransport.valueOf(d.mode().name()), d.urgent(), d.assurance(), TypeClient.valueOf(d.typeClient().name()));
+        return transfret.serviceExpedition().calculerDevis(versCommande(d), TypeClient.valueOf(d.typeClient().name()));
     }
 
     @Override
@@ -85,8 +83,18 @@ public class NouveauSystemeAdapter implements SystemeTransport {
         ).toList();
     }
 
-    private static List<Colis> versColis(List<ColisDto> colis) {
-        return colis.stream().map(c -> new Colis(c.description(), c.poidsKg(), c.longueurCm(), c.largeurCm(),
-                c.hauteurCm(), TypeMarchandise.valueOf(c.type().name()), c.valeurDeclaree())).toList();
+    private static Commande versCommande(DemandeExpedition d) {
+        return new Commande(versChargement(d.colis()), d.villeDepart(), d.villeArrivee(),
+                ModeTransport.valueOf(d.mode().name()), d.urgent(), d.assurance());
+    }
+
+    private static Commande versCommande(DemandeDevis d) {
+        return new Commande(versChargement(d.colis()), d.villeDepart(), d.villeArrivee(),
+                ModeTransport.valueOf(d.mode().name()), d.urgent(), d.assurance());
+    }
+
+    private static Chargement versChargement(List<ColisDto> colis) {
+        return new Chargement(colis.stream().map(c -> new Colis(c.description(), c.poidsKg(), c.longueurCm(),
+                c.largeurCm(), c.hauteurCm(), TypeMarchandise.valueOf(c.type().name()), c.valeurDeclaree())).toList());
     }
 }

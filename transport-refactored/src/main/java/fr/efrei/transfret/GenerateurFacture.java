@@ -1,5 +1,6 @@
 package fr.efrei.transfret;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
@@ -12,6 +13,12 @@ public class GenerateurFacture {
     private static final String DOUBLE_TRAIT = "==============================================\n";
     private static final String TRAIT = "----------------------------------------------\n";
 
+    private final Clock horloge;
+
+    public GenerateurFacture(Clock horloge) {
+        this.horloge = horloge;
+    }
+
     public String generer(Expedition e) {
         Client client = e.getClient();
         StringBuilder sb = new StringBuilder();
@@ -19,7 +26,7 @@ public class GenerateurFacture {
         sb.append("              FACTURE TRANSFRET\n");
         sb.append(DOUBLE_TRAIT);
         sb.append("Facture n° F-").append(e.getId()).append("\n");
-        sb.append("Date : ").append(LocalDate.now().format(FORMAT_DATE)).append("\n");
+        sb.append("Date : ").append(LocalDate.now(horloge).format(FORMAT_DATE)).append("\n");
         sb.append("Client : ").append(client.getNom()).append("\n");
         if (client.getType().siretObligatoire()) {
             sb.append("SIRET : ").append(client.getSiret()).append("\n");

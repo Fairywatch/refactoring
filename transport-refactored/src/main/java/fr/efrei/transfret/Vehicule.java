@@ -2,9 +2,10 @@ package fr.efrei.transfret;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
- * Un véhicule de la flotte. Chaque sous-classe dit elle-même ce qu'elle accepte et comment elle se déplace :
+ * Un véhicule de la flotte. Chaque sous-classe dit ce qu'elle refuse et comment elle se déplace :
  * aucune méthode n'est imposée à un véhicule qui ne saurait pas l'exécuter.
  */
 public abstract class Vehicule {
@@ -14,19 +15,22 @@ public abstract class Vehicule {
     private final String immatriculation;
     private final double capaciteMax;
     private final ModeTransport mode;
+    private final Set<TypeMarchandise> marchandisesRefusees;
     private final List<Colis> chargement = new ArrayList<>();
     private double chargeActuelle;
     private boolean disponible = true;
 
-    protected Vehicule(String immatriculation, double capaciteMax, ModeTransport mode) {
+    protected Vehicule(String immatriculation, double capaciteMax, ModeTransport mode, Set<TypeMarchandise> marchandisesRefusees) {
         this.immatriculation = immatriculation;
         this.capaciteMax = capaciteMax;
         this.mode = mode;
+        this.marchandisesRefusees = Set.copyOf(marchandisesRefusees);
     }
 
-    /** Disponible, du bon mode, assez de place, et le véhicule accepte ce type de marchandise. */
+    /** Disponible, du bon mode, assez de place, et aucune marchandise refusée. */
     public boolean peutPrendreEnCharge(Chargement colis, ModeTransport modeDemande) {
-        return disponible && mode == modeDemande && capaciteMax - chargeActuelle >= colis.poids() && accepte(colis);
+        return disponible && mode == modeDemande && capaciteMax - chargeActuelle >= colis.poids()
+                && marchandisesRefusees.stream().noneMatch(colis::contient);
     }
 
     /** @throws IllegalStateException si le chargement n'a pas été vérifié par {@link #peutPrendreEnCharge} */
@@ -56,13 +60,7 @@ public abstract class Vehicule {
         disponible = true;
     }
 
-    protected abstract boolean accepte(Chargement colis);
-
     protected abstract void seDeplacer(int distanceKm);
-
-    protected boolean transporte(TypeMarchandise type) {
-        return chargement.stream().anyMatch(c -> c.getType() == type);
-    }
 
     protected void faireLePlein() {
         System.out.println("Plein effectué pour " + immatriculation);
@@ -74,9 +72,5 @@ public abstract class Vehicule {
 
     public double getChargeActuelle() {
         return chargeActuelle;
-    }
-
-    public boolean estDisponible() {
-        return disponible;
     }
 }

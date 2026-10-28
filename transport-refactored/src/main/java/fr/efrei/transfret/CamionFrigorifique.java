@@ -1,5 +1,7 @@
 package fr.efrei.transfret;
 
+import java.util.EnumSet;
+
 /**
  * Ne transporte que des produits réfrigérés. Ce n'est plus un {@link Camion} : il refuserait des chargements
  * qu'un camion accepte, et ne pourrait donc pas le remplacer partout (Liskov).
@@ -7,12 +9,7 @@ package fr.efrei.transfret;
 public class CamionFrigorifique extends Vehicule {
 
     public CamionFrigorifique(String immatriculation, double capaciteMax) {
-        super(immatriculation, capaciteMax, ModeTransport.ROUTE);
-    }
-
-    @Override
-    protected boolean accepte(Chargement colis) {
-        return colis.uniquement(TypeMarchandise.REFRIGERE);
+        super(immatriculation, capaciteMax, ModeTransport.ROUTE, EnumSet.complementOf(EnumSet.of(TypeMarchandise.REFRIGERE)));
     }
 
     @Override

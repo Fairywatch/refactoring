@@ -8,12 +8,8 @@ public class Expedition {
 
     private final String id;
     private final Client client;
-    private final Chargement chargement;
-    private final String villeDepart;
-    private final String villeArrivee;
+    private final Commande commande;
     private final int distance;
-    private final ModeTransport mode;
-    private final boolean urgent;
     private final Vehicule vehicule;
     private final double prixHT;
     private final double prixTTC;
@@ -22,17 +18,12 @@ public class Expedition {
     private StatutExpedition statut = StatutExpedition.CREEE;
     private double fraisAnnulation;
 
-    public Expedition(String id, Client client, Chargement chargement, String villeDepart, String villeArrivee,
-                      int distance, ModeTransport mode, boolean urgent, Vehicule vehicule, double prixHT,
+    public Expedition(String id, Client client, Commande commande, int distance, Vehicule vehicule, double prixHT,
                       LocalDate dateCreation, LocalDate dateLivraisonPrevue) {
         this.id = id;
         this.client = client;
-        this.chargement = chargement;
-        this.villeDepart = villeDepart;
-        this.villeArrivee = villeArrivee;
+        this.commande = commande;
         this.distance = distance;
-        this.mode = mode;
-        this.urgent = urgent;
         this.vehicule = vehicule;
         this.prixHT = prixHT;
         this.prixTTC = Montants.ttc(prixHT);
@@ -79,27 +70,27 @@ public class Expedition {
     }
 
     public Chargement getChargement() {
-        return chargement;
+        return commande.chargement();
     }
 
     public String getVilleDepart() {
-        return villeDepart;
+        return commande.villeDepart();
     }
 
     public String getVilleArrivee() {
-        return villeArrivee;
+        return commande.villeArrivee();
+    }
+
+    public ModeTransport getMode() {
+        return commande.mode();
+    }
+
+    public boolean isUrgent() {
+        return commande.urgent();
     }
 
     public int getDistance() {
         return distance;
-    }
-
-    public ModeTransport getMode() {
-        return mode;
-    }
-
-    public boolean isUrgent() {
-        return urgent;
     }
 
     public StatutExpedition getStatut() {

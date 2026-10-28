@@ -14,15 +14,15 @@ public class ServiceClient {
         this.notificateur = notificateur;
     }
 
-    public Optional<Client> creerClient(String nom, String email, String telephone, String adresse, TypeClient type, String siret) {
-        Optional<String> refus = validateur.verifier(nom, email, type, siret);
+    /** @return le client inscrit, ou vide s'il est refusé */
+    public Optional<Client> inscrire(Client client) {
+        Optional<String> refus = validateur.verifier(client);
         if (refus.isPresent()) {
             System.out.println("ERREUR : " + refus.get());
             return Optional.empty();
         }
-        Client c = new Client(nom, email, telephone, adresse, type, siret);
-        clients.sauvegarder(c);
-        notificateur.souhaiterBienvenue(c);
-        return Optional.of(c);
+        clients.sauvegarder(client);
+        notificateur.souhaiterBienvenue(client);
+        return Optional.of(client);
     }
 }

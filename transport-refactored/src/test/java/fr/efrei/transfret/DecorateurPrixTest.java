@@ -21,7 +21,11 @@ class DecorateurPrixTest {
 
     static DemandeTarif demande(TypeMarchandise type, boolean urgent, boolean assurance, TypeClient client, double valeur) {
         Colis colis = new Colis("colis", 10, 50, 40, 30, type, valeur);
-        return new DemandeTarif(new Chargement(List.of(colis)), 100, ModeTransport.ROUTE, urgent, assurance, client);
+        return demande(new Chargement(List.of(colis)), urgent, assurance, client);
+    }
+
+    static DemandeTarif demande(Chargement chargement, boolean urgent, boolean assurance, TypeClient client) {
+        return new DemandeTarif(new Commande(chargement, "Paris", "Lille", ModeTransport.ROUTE, urgent, assurance), 100, client);
     }
 
     static DemandeTarif demande(TypeMarchandise type) {
@@ -70,8 +74,7 @@ class DecorateurPrixTest {
     void les_supplements_se_cumulent() {
         Colis fragile = new Colis("fragile", 10, 50, 40, 30, TypeMarchandise.FRAGILE, 100);
         Colis dangereux = new Colis("dangereux", 10, 50, 40, 30, TypeMarchandise.DANGEREUX, 100);
-        DemandeTarif demande = new DemandeTarif(new Chargement(List.of(fragile, dangereux)), 100, ModeTransport.ROUTE,
-                false, false, TypeClient.PARTICULIER);
+        DemandeTarif demande = demande(new Chargement(List.of(fragile, dangereux)), false, false, TypeClient.PARTICULIER);
         assertEquals(100 * 1.15 * 1.30, new SupplementDangereux(new SupplementFragile(prixFixe(100))).calculer(demande), PRECISION);
     }
 

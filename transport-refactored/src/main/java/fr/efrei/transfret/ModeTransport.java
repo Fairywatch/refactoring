@@ -10,7 +10,8 @@ public enum ModeTransport {
     ROUTE(Set.of(), true),
     RAIL(Set.of(TypeMarchandise.REFRIGERE), true),
     MER(Set.of(), false),
-    AIR(Set.of(TypeMarchandise.DANGEREUX, TypeMarchandise.REFRIGERE), true);
+    AIR(Set.of(TypeMarchandise.DANGEREUX, TypeMarchandise.REFRIGERE), true),
+    FLUVIAL(Set.of(TypeMarchandise.REFRIGERE), false);
 
     private final Set<TypeMarchandise> marchandisesInterdites;
     private final boolean urgenceAutorisee;

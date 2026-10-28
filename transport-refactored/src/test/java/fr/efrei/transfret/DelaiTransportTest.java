@@ -2,6 +2,7 @@ package fr.efrei.transfret;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.EnumMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -37,12 +38,11 @@ class DelaiTransportTest {
 
     @Test
     void l_estimateur_garantit_au_moins_un_jour() {
-        EstimateurDelai estimateur = new EstimateurDelai(Map.of(
-                ModeTransport.ROUTE, (km, urgent) -> 0,
-                ModeTransport.RAIL, (km, urgent) -> 0,
-                ModeTransport.MER, (km, urgent) -> 0,
-                ModeTransport.AIR, (km, urgent) -> 0));
-        assertEquals(1, estimateur.jours(10, ModeTransport.ROUTE, false));
+        Map<ModeTransport, DelaiTransport> instantane = new EnumMap<>(ModeTransport.class);
+        for (ModeTransport mode : ModeTransport.values()) {
+            instantane.put(mode, (km, urgent) -> 0);
+        }
+        assertEquals(1, new EstimateurDelai(instantane).jours(10, ModeTransport.ROUTE, false));
     }
 
     @Test
