@@ -8,11 +8,6 @@ import java.util.OptionalInt;
 
 public class ServiceExpedition {
 
-    private static final double KM_PAR_MILLE_NAUTIQUE = 1.852;
-    private static final int ROULAGE_PISTE_KM = 2;
-    private static final int ALTITUDE_CROISIERE_PIEDS = 35000;
-    private static final double TEMPERATURE_REFRIGERATION = 4;
-
     private final ExpeditionRepository expeditions;
     private final ClientRepository clients;
     private final ValidateurExpedition validateur;
@@ -54,9 +49,7 @@ public class ServiceExpedition {
             return refuser("aucun véhicule disponible pour cette expédition");
         }
         Vehicule v = vehicule.get();
-        for (Colis c : chargement.colis()) {
-            v.charger(c);
-        }
+        v.charger(chargement);
 
         int km = distance.getAsInt();
         LocalDate creation = LocalDate.now();
@@ -89,23 +82,7 @@ public class ServiceExpedition {
             System.out.println("ERREUR : impossible de démarrer l'expédition " + id);
             return false;
         }
-        Vehicule v = e.getVehicule();
-        v.setDisponible(false);
-        try {
-            v.faireLePlein();
-        } catch (Exception ex) {
-        }
-        switch (e.getMode()) {
-            case ROUTE, RAIL -> v.rouler(e.getDistance());
-            case MER -> v.naviguer((int) (e.getDistance() / KM_PAR_MILLE_NAUTIQUE));
-            case AIR -> {
-                v.rouler(ROULAGE_PISTE_KM);
-                v.voler(ALTITUDE_CROISIERE_PIEDS);
-            }
-        }
-        if (e.getChargement().contient(TypeMarchandise.REFRIGERE)) {
-            v.activerRefrigeration(TEMPERATURE_REFRIGERATION);
-        }
+        e.getVehicule().partir(e.getDistance());
         expeditions.sauvegarder(e);
         notificateur.signalerDepart(e);
         return true;
@@ -117,7 +94,7 @@ public class ServiceExpedition {
             System.out.println("ERREUR : impossible de livrer l'expédition " + id);
             return false;
         }
-        libererVehicule(e);
+        e.getVehicule().liberer(e.getChargement());
         expeditions.sauvegarder(e);
         notificateur.signalerLivraison(e);
         return true;
@@ -129,17 +106,10 @@ public class ServiceExpedition {
             System.out.println("ERREUR : impossible d'annuler l'expédition " + id);
             return false;
         }
-        libererVehicule(e);
+        e.getVehicule().liberer(e.getChargement());
         expeditions.sauvegarder(e);
         notificateur.signalerAnnulation(e);
         return true;
-    }
-
-    private void libererVehicule(Expedition e) {
-        for (Colis c : e.getChargement().colis()) {
-            e.getVehicule().decharger(c);
-        }
-        e.getVehicule().setDisponible(true);
     }
 
     private static Optional<Expedition> refuser(String motif) {

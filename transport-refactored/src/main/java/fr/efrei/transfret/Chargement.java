@@ -49,4 +49,9 @@ public class Chargement {
     public boolean contient(TypeMarchandise type) {
         return colis.stream().anyMatch(c -> c.getType() == type);
     }
+
+    /** @return {@code true} si le chargement n'est pas vide et que tous ses colis sont de ce type */
+    public boolean uniquement(TypeMarchandise type) {
+        return !colis.isEmpty() && colis.stream().allMatch(c -> c.getType() == type);
+    }
 }

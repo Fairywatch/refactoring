@@ -1,38 +1,30 @@
 package fr.efrei.transfret;
 
+/**
+ * Porte-conteneurs, éventuellement équipé de conteneurs frigorifiques.
+ */
 public class Bateau extends Vehicule {
 
-    private boolean conteneursRefrigeres;
+    private static final double KM_PAR_MILLE_NAUTIQUE = 1.852;
+
+    private final boolean conteneursRefrigeres;
 
     public Bateau(String immatriculation, double capaciteMax, boolean conteneursRefrigeres) {
-        super(immatriculation, capaciteMax);
+        super(immatriculation, capaciteMax, ModeTransport.MER);
         this.conteneursRefrigeres = conteneursRefrigeres;
     }
 
-    public void rouler(int km) {
-        throw new UnsupportedOperationException("Un bateau ne roule pas");
+    @Override
+    protected boolean accepte(Chargement colis) {
+        return conteneursRefrigeres || !colis.contient(TypeMarchandise.REFRIGERE);
     }
 
-    public void naviguer(int milesNautiques) {
-        System.out.println("Le navire " + immatriculation + " navigue sur " + milesNautiques + " milles nautiques");
-    }
-
-    public void voler(int altitude) {
-        throw new UnsupportedOperationException("Un bateau ne vole pas");
-    }
-
-    public void activerRefrigeration(double temperature) {
-        if (!conteneursRefrigeres) {
-            throw new UnsupportedOperationException("Pas de conteneurs frigorifiques sur ce navire");
+    @Override
+    protected void seDeplacer(int distanceKm) {
+        faireLePlein();
+        if (transporte(TypeMarchandise.REFRIGERE)) {
+            System.out.println("Conteneurs frigorifiques réglés à " + TEMPERATURE_FROID + "°C");
         }
-        System.out.println("Conteneurs frigorifiques réglés à " + temperature + "°C");
-    }
-
-    public boolean peutTransporterMatieresDangereuses() {
-        return true;
-    }
-
-    public boolean aConteneursRefrigeres() {
-        return conteneursRefrigeres;
+        System.out.println("Le navire " + getImmatriculation() + " navigue sur " + (int) (distanceKm / KM_PAR_MILLE_NAUTIQUE) + " milles nautiques");
     }
 }

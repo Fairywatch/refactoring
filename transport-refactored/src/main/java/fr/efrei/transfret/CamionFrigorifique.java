@@ -1,22 +1,24 @@
 package fr.efrei.transfret;
 
-public class CamionFrigorifique extends Camion {
+/**
+ * Ne transporte que des produits réfrigérés. Ce n'est plus un {@link Camion} : il refuserait des chargements
+ * qu'un camion accepte, et ne pourrait donc pas le remplacer partout (Liskov).
+ */
+public class CamionFrigorifique extends Vehicule {
 
     public CamionFrigorifique(String immatriculation, double capaciteMax) {
-        super(immatriculation, capaciteMax, false);
+        super(immatriculation, capaciteMax, ModeTransport.ROUTE);
     }
 
     @Override
-    public void charger(Colis colis) {
-        // un camion frigo ne prend QUE des colis réfrigérés
-        if (colis.getType() != TypeMarchandise.REFRIGERE) {
-            throw new IllegalArgumentException("Un camion frigorifique ne transporte que des produits réfrigérés");
-        }
-        super.charger(colis);
+    protected boolean accepte(Chargement colis) {
+        return colis.uniquement(TypeMarchandise.REFRIGERE);
     }
 
     @Override
-    public void activerRefrigeration(double temperature) {
-        System.out.println("Réfrigération activée à " + temperature + "°C sur " + immatriculation);
+    protected void seDeplacer(int distanceKm) {
+        faireLePlein();
+        System.out.println("Réfrigération activée à " + TEMPERATURE_FROID + "°C sur " + getImmatriculation());
+        System.out.println("Le camion frigorifique " + getImmatriculation() + " roule sur " + distanceKm + " km");
     }
 }

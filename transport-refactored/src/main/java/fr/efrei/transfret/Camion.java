@@ -1,31 +1,25 @@
 package fr.efrei.transfret;
 
+/**
+ * Camion bâché : pas de froid, matières dangereuses seulement avec la certification ADR.
+ */
 public class Camion extends Vehicule {
 
-    protected boolean adr; // certification matières dangereuses
+    private final boolean certifieAdr;
 
-    public Camion(String immatriculation, double capaciteMax, boolean adr) {
-        super(immatriculation, capaciteMax);
-        this.adr = adr;
+    public Camion(String immatriculation, double capaciteMax, boolean certifieAdr) {
+        super(immatriculation, capaciteMax, ModeTransport.ROUTE);
+        this.certifieAdr = certifieAdr;
     }
 
-    public void rouler(int km) {
-        System.out.println("Le camion " + immatriculation + " roule sur " + km + " km");
+    @Override
+    protected boolean accepte(Chargement colis) {
+        return !colis.contient(TypeMarchandise.REFRIGERE) && (certifieAdr || !colis.contient(TypeMarchandise.DANGEREUX));
     }
 
-    public void naviguer(int milesNautiques) {
-        throw new UnsupportedOperationException("Un camion ne navigue pas");
-    }
-
-    public void voler(int altitude) {
-        throw new UnsupportedOperationException("Un camion ne vole pas");
-    }
-
-    public void activerRefrigeration(double temperature) {
-        throw new UnsupportedOperationException("Ce camion n'est pas frigorifique");
-    }
-
-    public boolean peutTransporterMatieresDangereuses() {
-        return adr;
+    @Override
+    protected void seDeplacer(int distanceKm) {
+        faireLePlein();
+        System.out.println("Le camion " + getImmatriculation() + " roule sur " + distanceKm + " km");
     }
 }
